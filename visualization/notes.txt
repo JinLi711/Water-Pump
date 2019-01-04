@@ -1,0 +1,46 @@
+What to do for each input:
+
+input                   action             justification
+id                      - drop                        :all ids are unique
+amount_tsh              - binning, box cox, or log                :large outliers
+date_recorded           - 
+funder                  - 
+gps_height              - 
+installer               - 
+longitude               - 
+latitude                - 
+wpt_name                - 
+num_private             -                         
+basin                   - drop                         :99% corr with region and region has higher corr with labels
+subvillage              - 
+region                  - 
+region_code             - 
+district_code           - 
+lga                     - 
+ward                    - 
+population              - 
+public_meeting          - 
+recorded_by             - drop                        :there's only one value
+scheme_management       - 
+scheme_name             - 
+permit                  - drop                        :3% corr with label and is binary
+construction_year       - 
+extraction_type         - drop                        :100% corr with 'extraction_type_group' and 'extraction_type_class'
+extraction_type_group   - drop                        :100% corr with 'extraction_type_group' and class is least noisy
+extraction_type_class   - 
+management              - 
+management_group        - drop                        :5% corr with label and 100% corr with management          
+payment                 - drop                         :100% corr with payment_type
+payment_type            - 
+water_quality           - drop                          :100% corr with quality_group and has lower corr with label
+quality_group           - 
+quantity                - 
+quantity_group          - 
+source                  - 
+source_type             - drop                         :100% corr with source
+source_class            - drop                        :7% corr with label, and trinary with low freq in one of the category, also 100% corr with source
+waterpoint_type         - drop                          :100% corr with water_type_group and more noisy
+waterpoint_type_group   -
+
+
+We can verify the drops by running ml algorithms with raw data and checking the contributions of the input category
