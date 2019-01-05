@@ -1,0 +1,6 @@
+{
+"id": [["drop"], "All IDs are unique."],
+"amount_tsh": [["binning_5"], "Large outliers. Can also try log or box cox"],
+"date_recorded": [["finddays"], "Need to convert to days."],
+"funder": [["cbinning_50"], "1900 categories"]
+}
