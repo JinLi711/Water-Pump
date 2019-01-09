@@ -40,11 +40,13 @@ Feature Engineering Descriptions:
 Numeric:
 Binarization: turn data into binary data.
 Weight Changes: instead of linear weights, we can have polynomial weights.
-Binning: put numeric values into bins, especially useful for inputs that have outliers or large ranges
+Binning: 
+    put numeric values into bins, especially for inputs with outliers or large ranges
     fixed binning: decide on the bin sizes myself
     adaptive binning (usually safer): can divide bins into quartiles 
 Numeric Transformations: 
-    log: best used for skewed distributions as it tends to expand the values that fall in the range of lower magnitudes and compress the range of higher magnitudes
+    log: for skewed distributions as it tends to expand the values that fall 
+         in the range of lower magnitudes and compress the range of higher magnitudes
     box cox: used when variabity in different regions are largely different
     arcsin: for porportions
 Outlier Removals:
@@ -52,7 +54,8 @@ Outlier Removals:
     Dbscan:  https://towardsdatascience.com/a-brief-overview-of-outlier-detection-techniques-1e0b2c19e561
     Isolation Forest:
 Dealing With Irregular Values:
-    replace by mean or median: problem is that it doesn't account for uncertainty in imputations and doesn't factor in correlations between features
+    replace by mean or median: problem is that it doesn't account for uncertainty 
+        in imputations and doesn't factor in correlations between features
 feature combination:
     is there a way to combine features to make more insight? I don't see any reason right now.
 
@@ -64,7 +67,8 @@ If there's irregular labels:
     replace by most frequent: problem is that it introduces biases
 If there's missing values:
     replace by most common.
-    Note that this is very tricky, and I really need to compare before and afters for training to see if this works.
+    Note that this is very tricky, and I really need to compare before and afters
+        for training to see if this works.
 """
 
 
@@ -132,7 +136,13 @@ def get_data(data_path, label_path, valid_size=0.2):
 
     X_train = convert_num_labels_to_cat(
         X_train, ['region_code', 'district_code'])
-
+    
+    X_valid = convert_num_labels_to_cat(
+        X_valid, ['region_code', 'district_code'])
+    
+    X_train['status_group'] = y_train['status_group']
+    X_valid['status_group'] = y_valid['status_group']
+    
     return X_train, X_valid, y_train, y_valid
 
 
@@ -295,6 +305,7 @@ def perform_operations(df, col_name, operations):
         elif str(col.dtype) in {'datetime64[ns]'}:
             # TODO: add more datetime dtypes (not sure if that is the only one)
             if operation == "finddays":
+                # TODO: should NOT be min, will not generalize to validation/test
                 col = (col - min(col)).dt.days
 
         # categorical or object columns
@@ -417,41 +428,83 @@ def split_cat_num(df):
     if len(missing_col_names) != 0:
         print("Columns Missing:", missing_col_names)
 
-    return list(num_cols.columns), list(cat_cols.columns)
+    return num_cols, cat_cols
 
-
-def transform_df(df):
+def transform_df(df, cat_encode_type):
     """
     :param df: dataframe
     :type  df: pandas.core.frame.DataFrame
-    :returns: numpy array of size (instances, 
-              number of numeric columns + category one hot encoded columns)
-    :rtype:   numpy.ndarray
+    :param cat_encode_type: The type of encoding (one hot or just label)
+    :type  cat_encode_type: str 
+    :returns: (numpy array of size (instances, 
+              number of numeric columns + category one hot encoded columns),
+              pipeline)
+    :rtype:   (numpy.ndarray,
+               sklearn.compose._column_transformer.ColumnTransformer)
     """
 
     from sklearn.pipeline import Pipeline
     from sklearn.preprocessing import StandardScaler
     from sklearn.compose import ColumnTransformer
-    from sklearn.preprocessing import OneHotEncoder
 
     num_cols, cat_cols = split_cat_num(df)
+    num_col_names = list(num_cols.columns)
+    cat_col_names = list(cat_cols.columns)
 
     num_pipeline = Pipeline([
         ('std_scaler', StandardScaler()),
     ])
+    
+    if cat_encode_type == "one hot":
+        # one hot encoded: a lot more columns
+        from sklearn.preprocessing import OneHotEncoder
+        full_pipeline = ColumnTransformer([
+        ("num", num_pipeline, num_col_names),
+        ("cat", OneHotEncoder(), cat_col_names),
+        ])
+        result = full_pipeline.fit_transform(df).toarray()
+        
+    elif cat_encode_type == "numeric":
+        from sklearn.preprocessing import OrdinalEncoder
+        full_pipeline = ColumnTransformer([
+        ("num", num_pipeline, num_col_names),
+        ("cat", OrdinalEncoder(), cat_col_names),
+        ])
+        result = full_pipeline.fit_transform(df)
 
-    full_pipeline = ColumnTransformer([
-        ("num", num_pipeline, num_cols),
-        ("cat", OneHotEncoder(), cat_cols),
-    ])
+    else:
+        raise ValueError("Not an available encoder type")
 
-    # Note that the number of columns is now a lot larger, 
-    # since the categorical columns are one hot encoded.
-    result = full_pipeline.fit_transform(df)
-
-    return result.toarray()
+    return result, full_pipeline
 
 
+#======================================================================
+# Dealing with labels
+#======================================================================
 
 
+def encode_labels(labels, convert_type):
+    """
+    Convert labels into numeric labels (either numeric or one hot)
 
+    :param labels: a series of the labels
+    :type  labels: pandas.core.series.Series
+    :param labels: type of conversion
+    :type  labels: str
+    :returns: (encoder, array of the encoded result)
+    :rtype:   (sklearn.preprocessing.label.LabelEncoder,
+               numpy.ndarray)
+    """
+
+    labels = pd.DataFrame(labels)
+    if convert_type == "numeric":
+        from sklearn.preprocessing import LabelEncoder
+        encoder = LabelEncoder()
+    elif convert_type == "one hot":
+        from sklearn.preprocessing import OneHotEncoder
+        encoder = OneHotEncoder()
+    else:
+        raise ValueError("Not an avaliable convert type")
+
+    label_encoded = encoder.fit_transform(labels)
+    return encoder, label_encoded
