@@ -132,6 +132,7 @@ def conf_mx_rates (y, y_pred):
     :param y_pred: The predictions based on the ML algorithm.
     :type  y_pred: pandas.core.series.Series
     """
+    
     from sklearn.metrics import confusion_matrix
     
     conf_mx = confusion_matrix (y, y_pred)
