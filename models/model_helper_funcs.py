@@ -8,6 +8,11 @@ Brief Description of Each Model
 
 
 XGB (Extreme Gradient Boosting)
+    Create decision tree.
+    Look at residual errors made by first predictor.
+    Train another decision tree on the errors.
+    Repeat.
+    For predictions, add up predictions for all trees.
 
 SGD (Stochastic Gradient Descent)
     Start with randomized weights.
@@ -36,6 +41,22 @@ Decision Trees
     Start at root node.
     Split tree based on certain condition.
     Run down the tree to see prediction.
+
+Random Forests
+    Split training set
+    Train each set on a different decision tree.
+    Have each predict.
+    The final value is the most frequent prediction.
+
+Extremely Randomized Trees Ensemble
+    use random thresholds rather than search for best possible thresholds.
+
+AdaBoost
+    Start with base classifier.
+    Make prediction.
+    Relative weight of missclassified instances increase.
+    Repeat with second classifier using updated weights.
+    Repeat.
 
 
 ======================================================================
