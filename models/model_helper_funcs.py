@@ -141,34 +141,3 @@ def rand_search (model, param_grid, X, y, scoring=acc, cv=cv):
     return grid_search
 
 
-#======================================================================
-# Validation set score
-#======================================================================
-
-
-def valid_score(model, X, y, scoring=acc, cv=cv):
-    """
-    Find the validation score.
-    
-    :param model: a model that can be entered in random search 
-    :type  model: sklearn model
-    :param X: the validation input
-    :type  X: numpy.ndarray
-    :param y: validation label
-    :type  y: numpy.ndarray
-    :param scoring: the scoring methodology
-    :type  scoring: str
-    :param cv: number of sets to split for cross validation
-    :type  cv: int
-    """
-    
-    from sklearn.model_selection import cross_val_score
-    
-    score = cross_val_score(
-        model, 
-        X, 
-        y, 
-        cv=cv, 
-        scoring=scoring
-    )
-    print("Validation Set Scores:\n", score)

@@ -58,6 +58,7 @@ def xgb_feature_importance(xgc):
 # General Models
 #======================================================================
 
+
 def test_measure(answer, prediction, metric):
     """
     Use a metric to measure the success of the model
@@ -68,12 +69,16 @@ def test_measure(answer, prediction, metric):
     :type  prediction: numpy.ndarray
     :param answer: The metric used to evaluate the model
     :type  metric: str
+    :returns: the evaluation metric number
+    :rtype:   float
     """
     
     if metric == "accuracy":
         from sklearn.metrics import accuracy_score
         accuracy = accuracy_score(answer, prediction)
-        print("Accuracy: %.2f%%" % (accuracy * 100.0))
+        accuracy_perc = accuracy * 100.0
+        print("Accuracy: %.2f%%" % accuracy_perc)
+        return accuracy_perc
     else:
         raise ValueError("Not an avaliable metric")
 
@@ -132,7 +137,7 @@ def conf_mx_rates (y, y_pred):
     :param y_pred: The predictions based on the ML algorithm.
     :type  y_pred: pandas.core.series.Series
     """
-    
+
     from sklearn.metrics import confusion_matrix
     
     conf_mx = confusion_matrix (y, y_pred)
@@ -142,3 +147,108 @@ def conf_mx_rates (y, y_pred):
     np.fill_diagonal(norm_conf_mx, 0)
     plt.matshow(norm_conf_mx, cmap=plt.cm.gray)
     plt.show()
+
+
+#======================================================================
+# Validation Set Evaluations
+#======================================================================
+
+
+# scoring types
+f1 = 'f1_macro' 
+acc = 'accuracy'
+cv=3
+
+
+class Evaluations:
+    """
+    A class for storing the evaluation results of each model
+    """
+
+    def __init__(self, model_name, validation_score, y_pred):
+        """
+        :param model_name: name of the model
+        :type  model_name: str
+        :param validation_score: the result of evaluating the model on the validation set
+        :type  validation_score: 
+        :param y_pred: the predictions based on the model
+        :type  y_pred: numpy.ndarray
+        """
+
+        self.model_name = model_name
+        self.validation_score = validation_score
+        self.y_pred = y_pred
+
+
+def valid_score(model, X, y, scoring=acc, cv=cv):
+    """
+    Find the validation score.
+    
+    :param model: a model that can be entered in random search 
+    :type  model: sklearn model
+    :param X: the validation input
+    :type  X: numpy.ndarray
+    :param y: validation label
+    :type  y: numpy.ndarray
+    :param scoring: the scoring methodology
+    :type  scoring: str
+    :param cv: number of sets to split for cross validation
+    :type  cv: int
+    """
+    
+    from sklearn.model_selection import cross_val_score
+    
+    score = cross_val_score(
+        model, 
+        X, 
+        y, 
+        cv=cv, 
+        scoring=scoring
+    )
+    print("Validation Set Scores:\n", score)
+
+
+def report_scores(model, valid_X, valid_y, encoder, model_name):
+    """
+    Report the scores of a certain model.
+    Includes:
+        validation score
+        confusion matrix
+        classification report
+
+    :param model: sklearn model
+    :type  model: sklearn model
+    :param valid_X: inputs
+    :type  valid_X: numpy.ndarray
+    :param valid_y: labels
+    :type  valid_y: numpy.ndarray
+    :param encoder: sklearn encoder that codes categories with numeric
+    :type  encoder: sklearn.preprocessing.label.LabelEncoder
+    :param model_name: name of the model
+    :type  model_name: str
+    :returns: a class containing the evaluation attributes
+    :rtype:   Evaluations class
+    """
+
+    # valid_score(model, valid_X, valid_y)
+    
+    y_pred = model.predict(valid_X)
+    acc = test_measure(valid_y, y_pred, metric="accuracy")
+
+    target_names = list(encoder.classes_)
+    print("Classes: ", target_names)
+
+    print("Confusion Matrix: ")
+    conf_mx_rates(valid_y, y_pred)
+
+    print("Classification Report: ")
+    from sklearn.metrics import classification_report
+    print(classification_report(
+        valid_y,
+        y_pred,
+        target_names=target_names
+    ))
+
+    evaluation_class = Evaluations(model_name, acc, y_pred)
+
+    return evaluation_class
