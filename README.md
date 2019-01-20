@@ -1,22 +1,24 @@
 # Water-Pump
 
-Repository For Predicting the Conditions of Water Pumps (either functional, not functional, or functional but needs repairs). To see more about the data, check [here](https://github.com/JinLi711/Water-Pump/blob/master/Context.txt).
+Repository For predicting the conditions of water pumps in Tanzania (either functional, not functional, or functional but needs repairs). To see more about the data, check [here](https://github.com/JinLi711/Water-Pump/blob/master/Context.txt).
 
-Still in working progress.
 
 # Visualization
 
-Visualize individual features independently using histograms. Did not plot a histogram for categories with too many features.
+Visualized:
 
-Visualized correlations between categorical features. I used cramers V and theils U make heat maps.
-
-Visualized correlations between numeric features and cateogirical features using correlation ratio. Used heat maps.
-
-Visualized correlations between numeric features with pearson's R. Created heat maps, joint plots, and pairplots.
+  * individual features independently 
+  * correlations between categorical features (using [cramers V](https://en.wikipedia.org/wiki/Cram%C3%A9r%27s_V) and [theils U](https://en.wikipedia.org/wiki/Uncertainty_coefficient))
+  * correlations between numeric features and cateogirical features (using [correlation ratio](https://en.wikipedia.org/wiki/Correlation_ratio))
+  * correlations between numeric features (using [pearson's R](https://en.wikipedia.org/wiki/Pearson_correlation_coefficient))
+  
+Created histograms, heatmaps, joint plots, and pairplots.
 
 Visualization is mainly used to perform feature extraction and understanding the data.
 
 # Preprocess
+
+  * 80/20 split for train and validation. For the final model, the model was retrained on the entire train set.
 
   * Dealing with all datatypes:
       * dropping irrelevant features
@@ -49,4 +51,11 @@ Visualization is mainly used to perform feature extraction and understanding the
   * Decision Trees
   * Random Forests
   * AdaBoost
-  * Ensemble
+
+# Results
+
+80% accuracy. For reference, the best results produced about 82% accuracy.
+
+# Problems
+
+  * Dropping rows could not be used because I could not turn this off when applying the transformation to the final test set (I'm not allowed to drop rows for the final test set).
