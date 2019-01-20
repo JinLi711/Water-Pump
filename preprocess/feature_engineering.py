@@ -21,21 +21,40 @@ Dealing with datetime:
 Dealing with categories:
     replace NaN with the most common category
     reduce dimensions of categorical data
+        binning categories with low frequencies into an OTHER category
     convert categories into one-hot encoding
 
 =======================================================================
 
 Usage Examples:
 
+# Train set
 >>> train_X, valid_X, train_y, valid_y = fe.get_data(
     '../data/train.csv', '../data/train_labels.csv')
 >>> trans = fe.DataCleaning()
->>> transformed_train_X = trans.transform(train_X)
->>> np_train_X = fe.transform_df(transformed_train_X)
+>>> transformed_train_X = trans.fit_transform(train_X)
+>>> train_y = transformed_train_X['status_group']
+>>> transformed_train_X.drop(['status_group'], axis=1, inplace=True)
+>>> train_X_numeric, pipeline_ord = fe.transform_df(
+    transformed_train_X, 
+    cat_encode_type="numeric")
+>>> train_X_numeric = pd.DataFrame(train_X_numeric, columns=col_names)
+>>> y_encoder_num, train_y_num = fe.encode_labels(
+    train_y, convert_type="numeric")
+>>> transformed_valid_X = trans.transform(valid_X)
+
+# Validation set
+>>> valid_y = transformed_valid_X['status_group']
+>>> transformed_valid_X.drop(['status_group'], axis=1, inplace=True)
+>>> valid_X_numeric = pipeline_ord.transform (transformed_valid_X)
+>>> valid_X_numeric = pipeline_ord.transform(transformed_valid_X)
+>>> valid_X_numeric = pd.DataFrame(data=valid_X_numeric, columns=col_names, )
+>>> valid_y_num = y_encoder_num.transform(valid_y)
+
 
 =======================================================================
 
-Feature Engineering Descriptions:
+Feature Engineering Description Notes:
 
 Numeric:
 Binarization: turn data into binary data.
@@ -48,7 +67,7 @@ Numeric Transformations:
     log: for skewed distributions as it tends to expand the values that fall 
          in the range of lower magnitudes and compress the range of higher magnitudes
     box cox: used when variabity in different regions are largely different
-    arcsin: for porportions
+    arcsin: for proportions
 Outlier Removals:
     z-score: parametric, usually 2.5, 3, 3.5
     Dbscan:  https://towardsdatascience.com/a-brief-overview-of-outlier-detection-techniques-1e0b2c19e561
@@ -99,6 +118,8 @@ def convert_num_labels_to_cat(df, categories):
     :type  df: pandas.core.frame.DataFrame
     :param categories: list of column names to convert
     :type  categories: list
+    :returns: dataframe
+    :rtype:   pandas.core.frame.DataFrame
     """
 
     for cat in categories:
@@ -118,6 +139,11 @@ def get_data(data_path, label_path, valid_size=0.2):
     :type  label_path: str
     :param test_size: Proportion to split on for the validation size
     :type  test_size: float
+    :returns: 4 dataframes
+    :rtype:   (pandas.core.frame.DataFrame,
+               pandas.core.frame.DataFrame,
+               pandas.core.frame.DataFrame,
+               pandas.core.frame.DataFrame) 
     """
 
     from sklearn.model_selection import train_test_split
@@ -146,15 +172,42 @@ def get_data(data_path, label_path, valid_size=0.2):
     return X_train, X_valid, y_train, y_valid
 
 
+def get_test(data_path):
+    """
+    Get the test data.
+    Also, convert appropriate numeric labels to categorical dtypes.
+
+    :param data_path: path of the data input
+    :type  data_path: str
+    :returns: dataframe
+    :rtype:   pandas.core.frame.DataFrame 
+    """
+
+    from sklearn.model_selection import train_test_split
+
+    data = pd.read_csv(data_path)
+    data = condense_csv.compress_X(data)
+
+    X_test = convert_num_labels_to_cat(
+        data, ['region_code', 'district_code'])
+    
+    X_test['status_group'] = np.nan
+    
+    return X_test
+
+
 #======================================================================
 # Create a list of classes based on json file.
 #======================================================================
 
 
-def get_starting_info():
+def get_starting_info(path='../preprocess/starting_info.json'):
     """
-    Get the initial starting information from starting_info.json.
-
+    Get the initial starting information.
+    The default is from starting_info.json.
+    
+    :param path: path of the json file
+    :type  path: str
     :returns: a dictionary where the key is the column name and 
               the value is a list, where the first item of that list
               is a list of operations to perform on the column 
@@ -163,7 +216,7 @@ def get_starting_info():
     :rtype:   dict
     """
 
-    file = open('../preprocess/starting_info.json')
+    file = open(path)
     starting_info = json.load(file)
     file.close()
     return starting_info
@@ -189,7 +242,7 @@ class ColumnOperations:
         self.justifications = justifications
 
 
-def create_col_instances():
+def create_col_instances(starting_info):
     """
     Create a list of instances of the column operation class
 
@@ -199,15 +252,13 @@ def create_col_instances():
     :rtype:   list
     """
 
-    starting_info = get_starting_info()
-
     col_instances = []
     for col_name, attributes in starting_info.items():
         col_instances.append(ColumnOperations(
             col_name, attributes[0], attributes[1]))
     return col_instances
 
-list_of_classes = create_col_instances()
+list_of_classes = create_col_instances(get_starting_info())
 
 
 #======================================================================

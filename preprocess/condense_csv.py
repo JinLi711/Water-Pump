@@ -2,6 +2,7 @@
 Decrease the memory usage of the values and labels in the csv files.
 """
 
+
 import numpy as np
 import pandas as pd
 import matplotlib.pyplot as plt
@@ -50,8 +51,12 @@ def downcast_df_int_columns(df):
         print("\ndowncasting integers for:", list_of_columns, "\n")
 
         for col in list_of_columns:
-            print("reduced memory usage for:  ", col.ljust(max_string_length+2)[:max_string_length+2],
-                  "from", str(round(df[col].memory_usage(deep=True)*1e-6, 2)).rjust(8), "to", end=" ")
+            print("reduced memory usage for:  ", 
+                  col.ljust(max_string_length+2)[:max_string_length+2],
+                  "from", 
+                  str(round(df[col].memory_usage(deep=True)*1e-6, 2)).rjust(8),
+                  "to", 
+                  end=" ")
             df[col] = pd.to_numeric(df[col], downcast="integer")
             print(str(round(df[col].memory_usage(deep=True)*1e-6, 2)).rjust(8))
     else:
